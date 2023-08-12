@@ -7,11 +7,13 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Create and publish a development Docker image to ghcr.io
+name: Create and publish a prebuilt Docker image to ghcr.io
 
 on:
-  push:
-    branches: [ "prebuilt" ]
+  workflow_run:
+    workflows: [ "Build and Test" ]
+    types:
+    - completed
 
 env:
   GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -19,6 +21,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  if: github.ref == 'refs/heads/prebuilt'
   build-and-push-image:
     runs-on: ubuntu-22.04
     permissions:
@@ -52,7 +55,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
-        file: deploy/Dockerfile
+        file: Dockerfile
         context: .
         push: true
         tags: ${{ steps.meta.outputs.tags }}
