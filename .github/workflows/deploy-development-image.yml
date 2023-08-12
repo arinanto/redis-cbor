@@ -1,0 +1,59 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Create and publish a development Docker image to ghcr.io
+
+on:
+  push:
+    branches: [ "prebuilt" ]
+
+env:
+  GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Sets IMAGE_TAG_PREFIX
+      env:
+        name: "${{ env.GIT_BRANCH }}"
+      run: |
+        echo "IMAGE_TAG_PREFIX=${name/\//_}-" >> $GITHUB_ENV
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: type=sha,format=short,prefix=${{ env.IMAGE_TAG_PREFIX }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        file: deploy/Dockerfile
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
