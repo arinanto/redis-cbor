@@ -21,8 +21,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  if: github.ref == 'refs/heads/prebuilt'
   build-and-push-image:
+    if: github.ref == 'refs/heads/prebuilt'
     runs-on: ubuntu-22.04
     permissions:
       contents: read
