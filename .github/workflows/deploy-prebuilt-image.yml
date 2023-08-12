@@ -10,10 +10,8 @@
 name: Create and publish a prebuilt Docker image to ghcr.io
 
 on:
-  workflow_run:
-    workflows: [ "Build and Test" ]
-    types:
-    - completed
+  push:
+    branches: [ "prebuilt" ]
 
 env:
   GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -22,7 +20,6 @@ env:
 
 jobs:
   build-and-push-image:
-    if: github.ref == 'refs/heads/prebuilt'
     runs-on: ubuntu-22.04
     permissions:
       contents: read
